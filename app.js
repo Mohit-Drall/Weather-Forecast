@@ -1,92 +1,182 @@
-// api.openweathermap.org/data/2.5/weather?q={city name}&appid={your api key}
+const currentTemperature = document.getElementById('currentTemp')
+const weatherIcon = document.getElementById('weatherIcon')
+const logo = document.getElementById('HeaderLogo')
+const weatherDescription = document.getElementById('weatherDescription')
+const windSpeed = document.getElementById('wind')
+const windDirection = document.getElementById('windDir')
+const lowestToday = document.getElementById('lowestToday')
+const highestToday = document.getElementById('highestToday')
+const pressure = document.getElementById('pressure')
+const humidity = document.getElementById('humidity')
+const sunrise = document.getElementById('sunrise')
+const sunset = document.getElementById('sunset')
+const sunriseRelative = document.getElementById('sunriseRelative')
+const sunsetRelative = document.getElementById('sunsetRelative')
+const userLocation = document.getElementById('location')
+const time = document.getElementById('time')
+const date = document.getElementById('date')
+const searchInput = document.getElementById('searchInput')
 
-const weatherApi = {
-    key: "ee33e94d3499344ed1af87c78522cda8",
-    baseUrl: "https://api.openweathermap.org/data/2.5/weather", 
+const monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const getWeatherData = async () => {
+  try {
+    const city = searchInput.value || 'New Delhi'
+
+    const currentWeather = new Promise(async (resolve, reject) => {
+      try {
+        const weatherApiData = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=8109965e7254a469d08a746e8b210e1e&units=imperial`,
+        )
+
+        resolve(await weatherApiData.json())
+      } catch (error) {
+        reject()
+      }
+    })
+
+    const forecast = new Promise(async (resolve, reject) => {
+      try {
+        const forecastApiData = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=8109965e7254a469d08a746e8b210e1e&units=imperial&cnt=10`,
+        )
+
+        resolve(await forecastApiData.json())
+      } catch (error) {
+        reject()
+      }
+    })
+
+    const data = await Promise.all([currentWeather, forecast])
+
+    updateDom(data)
+  } catch (error) {
+    console.log(error)
+  }
 }
 
-const searchInputBox = document.getElementById('input-box');
-
-// Event Listener Function on keypress
-searchInputBox.addEventListener('keypress', (event) => {
-    
-    if(event.keyCode == 13) {
-        console.log(searchInputBox.value);
-        getWeatherReport(searchInputBox.value);
-        document.querySelector('.weather-body').style.display = "block";
-    }
-
-});
-
-// Get Weather Report
-function getWeatherReport(city) {
-    fetch(`${weatherApi.baseUrl}?q=${city}&appid=${weatherApi.key}&units=metric`)
-    .then(weather => {
-        return weather.json();
-    }).then(showWeatherReport);
+const getDirection = deg => {
+  switch (true) {
+    case deg < 22.5:
+      return 'N'
+    case deg < 67.5:
+      return 'NE'
+    case deg < 112.5:
+      return 'E'
+    case deg < 157.5:
+      return 'SE'
+    case deg < 202.5:
+      return 'S'
+    case deg < 247.5:
+      return 'SW'
+    case deg < 292.5:
+      return 'W'
+    case deg < 337.5:
+      return 'NW'
+  }
 }
 
-// Show Weather Report
-function showWeatherReport(weather){
-    console.log(weather);
+/**
+ * Update each DOM element with the API data
+ */
+const updateDom = data => {
+  console.log('🔥 updating', data)
+  currentTemperature.innerText = data[0].main.temp.toFixed(1)
+  weatherIcon.src = `https://openweathermap.org/img/wn/${data[0].weather[0].icon}@2x.png`
 
-    let city = document.getElementById('city');
-    city.innerText = `${weather.name}, ${weather.sys.country}`;
+  weatherDescription.innerText = data[0].weather[0].main
 
-    let temperature = document.getElementById('temp');
-    temperature.innerHTML = `${Math.round(weather.main.temp)}&deg;C`;
+  windSpeed.innerText = data[0].wind.speed.toFixed(1)
 
-    let minMaxTemp = document.getElementById('min-max');
-    minMaxTemp.innerHTML = `${Math.floor(weather.main.temp_min)}&deg;C (min)/ ${Math.ceil(weather.main.temp_max)}&deg;C (max) `;
+  windDirection.innerText = getDirection(data[0].wind.deg)
 
-    let weatherType = document.getElementById('weather');
-    weatherType.innerText = `${weather.weather[0].main}`;
+  lowestToday.innerText = Math.round(data[0].main.temp_min)
 
-    let date = document.getElementById('date');
-    let todayDate = new Date();
-    date.innerText = dateManage(todayDate);
+  highestToday.innerText = Math.round(data[0].main.temp_max)
+  pressure.innerText = data[0].main.pressure
 
-    
-    if(weatherType.textContent == 'Clear') {
-        document.body.style.backgroundImage = "url('images/clear.jpg')";
-        
-    } else if(weatherType.textContent == 'Clouds') {
+ humidity.innerText = data[0].main.humidity
 
-        document.body.style.backgroundImage = "url('images/cloud.jpg')";
-        
-    } else if(weatherType.textContent == 'Haze') {
+  const sunriseTs = new Date(data[0].sys.sunrise * 1000)
+  const sunsetTs = new Date(data[0].sys.sunset * 1000)
 
-        document.body.style.backgroundImage = "url('images/cloud.jpg')";
-        
-    }     else if(weatherType.textContent == 'Rain') {
-        
-        document.body.style.backgroundImage = "url('images/rain.jpg')";
-        
-    } else if(weatherType.textContent == 'Snow') {
-        
-        document.body.style.backgroundImage = "url('images/snow.jpg')";
-    
-    } else if(weatherType.textContent == 'Thunderstorm') {
-    
-        document.body.style.backgroundImage = "url('images/thunderstorm.jpg')";
-        
-    } 
+  sunrise.innerText = sunriseTs.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+  })
+
+  // Do the same for Sunset
+  sunset.innerText = sunsetTs.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+  })
+
+  // Using timeago.js, create relative timestamps for both sunrise and sunset
+  sunriseRelative.innerText = timeago.format(sunriseTs)
+  sunsetRelative.innerText = timeago.format(sunsetTs)
+
+  userLocation.innerText = data[0].name
+
+  // Get and format Current Time
+  time.innerText = new Date(Date.now()).toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+  })
+
+  // Get and format Current Date
+  date.innerText = new Date(Date.now()).toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  // Call the renderChart function and pass in the list array of the 2nd object in the data array
+  renderChart(data[1].list)
 }
 
-// Date manage
-function dateManage(dateArg) {
+// Create a function that renders the chart
+const renderChart = data => {
+  // Store the DOM element that will hold the chart
+  const myChart = echarts.init(document.getElementById('chart'))
 
-    let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const option = {
+    legend: {
+      data: ['temperature'],
+    },
+    tooltip: {},
+    xAxis: {
+      data: data.map(item => item.dt_txt),
+    },
+    yAxis: {},
+    series: [
+      {
+        type: 'line',
+        smooth: true,
+        areaStyle: {
+          opacity: 0.5,
+        },
+        data: data.map(item => item.main.temp),
+      },
+    ],
+  }
 
-    let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-    let year = dateArg.getFullYear();
-    let month = months[dateArg.getMonth()];
-    let date = dateArg.getDate();
-    let day = days[dateArg.getDay()];
-
-    return `${date} ${month} (${day}), ${year}`;
+  // Using the given function from the documentation, generate the chart using the options above
+  myChart.setOption(option)
 }
 
-
-
+// Call the getWeatherData function
+getWeatherData()
