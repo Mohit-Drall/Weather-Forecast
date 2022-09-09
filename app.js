@@ -94,19 +94,29 @@ const getDirection = deg => {
  */
 const updateDom = data => {
   console.log('🔥 updating', data)
-  currentTemperature.innerText = data[0].main.temp.toFixed(1)
+
+  
+  curinF =data[0].main.temp
+  curinC =(curinF -32) * 5/9;
+  currentTemperature.innerText = curinC.toFixed(3) 
+
   weatherIcon.src = `https://openweathermap.org/img/wn/${data[0].weather[0].icon}@2x.png`
 
   weatherDescription.innerText = data[0].weather[0].main
 
-  windSpeed.innerText = data[0].wind.speed.toFixed(1)
+  windSpeed.innerText = (data[0].wind.speed * 1.6093).toFixed(2)
 
   windDirection.innerText = getDirection(data[0].wind.deg)
 
-  lowestToday.innerText = Math.round(data[0].main.temp_min)
+  ltinF =data[0].main.temp_min
+  ltinC = (ltinF -32) * 5/9;
+  lowestToday.innerText = ltinC.toFixed(2)
 
-  highestToday.innerText = Math.round(data[0].main.temp_max)
-  pressure.innerText = data[0].main.pressure
+  htinF =data[0].main.temp_max
+  htinC = (htinF -32) * 5/9;
+  highestToday.innerText = htinC.toFixed(2)
+
+  pressure.innerText = data[0].main.pressure *100
 
  humidity.innerText = data[0].main.humidity
 
@@ -118,25 +128,21 @@ const updateDom = data => {
     minute: 'numeric',
   })
 
-  // Do the same for Sunset
   sunset.innerText = sunsetTs.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: 'numeric',
   })
 
-  // Using timeago.js, create relative timestamps for both sunrise and sunset
   sunriseRelative.innerText = timeago.format(sunriseTs)
   sunsetRelative.innerText = timeago.format(sunsetTs)
 
   userLocation.innerText = data[0].name
 
-  // Get and format Current Time
   time.innerText = new Date(Date.now()).toLocaleString('en-US', {
     hour: 'numeric',
     minute: 'numeric',
   })
 
-  // Get and format Current Date
   date.innerText = new Date(Date.now()).toLocaleString('en-US', {
     weekday: 'long',
     month: 'short',
@@ -144,13 +150,10 @@ const updateDom = data => {
     year: 'numeric',
   })
 
-  // Call the renderChart function and pass in the list array of the 2nd object in the data array
   renderChart(data[1].list)
 }
 
-// Create a function that renders the chart
 const renderChart = data => {
-  // Store the DOM element that will hold the chart
   const myChart = echarts.init(document.getElementById('chart'))
 
   const option = {
@@ -174,9 +177,7 @@ const renderChart = data => {
     ],
   }
 
-  // Using the given function from the documentation, generate the chart using the options above
   myChart.setOption(option)
 }
 
-// Call the getWeatherData function
 getWeatherData()
